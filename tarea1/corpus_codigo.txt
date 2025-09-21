@@ -1,47 +1,87 @@
-def suma(a, b):
-    return a + b
+def calculate_fibonacci(n):
+    if n <= 1:
+        return n
+    return calculate_fibonacci(n-1) + calculate_fibonacci(n-2)
 
-def resta(a, b):
-    return a - b
-
-def factorial(n):
-    if n == 0:
-        return 1
-    else:
-        return n * factorial(n-1)
-
-class Persona:
-    def __init__(self, nombre, edad):
-        self.nombre = nombre
-        self.edad = edad
+class DataProcessor:
+    def __init__(self, data_path):
+        self.data_path = data_path
+        self.processed_data = []
     
-    def saludar(self):
-        print(f"Hola, me llamo {self.nombre} y tengo {self.edad} años.")
-
-class Estudiante(Persona):
-    def __init__(self, nombre, edad, universidad):
-        super().__init__(nombre, edad)
-        self.universidad = universidad
+    def load_data(self):
+        with open(self.data_path, 'r') as file:
+            return json.load(file)
     
-    def estudiar(self, materia):
-        print(f"{self.nombre} está estudiando {materia} en {self.universidad}")
+    def process_batch(self, batch_size=100):
+        for i in range(0, len(self.data), batch_size):
+            batch = self.data[i:i+batch_size]
+            processed_batch = self.transform_data(batch)
+            self.processed_data.extend(processed_batch)
 
-for i in range(5):
-    print("Número:", i)
+def train_neural_network(X_train, y_train, epochs=100, learning_rate=0.001):
+    weights = np.random.randn(X_train.shape[1])
+    bias = 0.0
+    
+    for epoch in range(epochs):
+        predictions = sigmoid(np.dot(X_train, weights) + bias)
+        loss = binary_cross_entropy(y_train, predictions)
+        
+        dw = np.dot(X_train.T, (predictions - y_train)) / len(y_train)
+        db = np.mean(predictions - y_train)
+        
+        weights -= learning_rate * dw
+        bias -= learning_rate * db
+        
+        if epoch % 10 == 0:
+            print(f"Epoch {epoch}, Loss: {loss:.4f}")
+    
+    return weights, bias
 
-def fibonacci(n):
-    a, b = 0, 1
-    secuencia = []
-    for _ in range(n):
-        secuencia.append(a)
-        a, b = b, a + b
-    return secuencia
+import tensorflow as tf
+from sklearn.model_selection import train_test_split
+from transformers import AutoTokenizer, AutoModel
 
-if __name__ == "__main__":
-    p = Persona("Ana", 30)
-    p.saludar()
-    e = Estudiante("Luis", 20, "Universidad Nacional")
-    e.saludar()
-    e.estudiar("matemáticas")
-    print("Factorial de 5:", factorial(5))
-    print("Fibonacci hasta 10:", fibonacci(10))
+def preprocess_text_data(sentences, max_length=512):
+    tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
+    encoded = tokenizer.batch_encode_plus(
+        sentences,
+        max_length=max_length,
+        padding='max_length',
+        truncation=True,
+        return_tensors='pt'
+    )
+    return encoded['input_ids'], encoded['attention_mask']
+
+class NeuralNetwork:
+    def __init__(self, input_size, hidden_size, output_size):
+        self.weights1 = np.random.randn(input_size, hidden_size)
+        self.weights2 = np.random.randn(hidden_size, output_size)
+        self.bias1 = np.zeros((1, hidden_size))
+        self.bias2 = np.zeros((1, output_size))
+    
+    def forward(self, X):
+        self.z1 = np.dot(X, self.weights1) + self.bias1
+        self.a1 = sigmoid(self.z1)
+        self.z2 = np.dot(self.a1, self.weights2) + self.bias2
+        return softmax(self.z2)
+
+def load_dataset(file_path, test_size=0.2):
+    data = pd.read_csv(file_path)
+    X = data.drop('target', axis=1).values
+    y = data['target'].values
+    return train_test_split(X, y, test_size=test_size, random_state=42)
+
+for epoch in range(num_epochs):
+    model.train()
+    total_loss = 0
+    for batch_idx, (data, target) in enumerate(train_loader):
+        optimizer.zero_grad()
+        output = model(data)
+        loss = criterion(output, target)
+        loss.backward()
+        optimizer.step()
+        total_loss += loss.item()
+    
+    if epoch % 10 == 0:
+        print(f'Epoch: {epoch}, Loss: {total_loss/len(train_loader):.4f}')
+
